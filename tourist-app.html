@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: #f8fafc; padding: 0; margin: 0; width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
+
+    <!-- Top Sticky Header Bar -->
+    <div class="app-header">
+        <div class="title" id="txt-navTitle">南阿蘇鉄道 多言語ナビシステム</div>
+        <select id="langSelect" onchange="toggleLanguage()" style="font-size: 11px; padding: 4px 6px; border-radius: 6px; border: none; font-weight: bold; background: white; cursor: pointer; color: #003366; max-width: 90%;">
+            <option value="ja">日本語 🇯🇵</option>
+            <option value="en">English 🇺🇸</option>
+            <option value="zh_tw">繁體中文 🇹🇼</option>
+            <option value="zh_cn">简体中文 🇨🇳</option>
+            <option value="ko">한국어 🇰🇷</option>
+            <option value="vi">Tiếng Việt 🇻🇳</option>
+            <option value="ne">नेपाली 🇳🇵</option>
+            <option value="si">සිංහල 🇱🇰</option>
+            <option value="my">မြန်မာဘာသာ 🇲🇲</option>
+            <option value="th">ไทย 🇹🇭</option>
+            <option value="fr">Français 🇫🇷</option>
+        </select>
+    </div>
+    
+    <!-- Independently Scrollable Container Body -->
+    <div class="app-content">
+        <!-- 緊急災害アラートバナー -->
+        <div id="userAlertBanner" class="alert-banner">
+            🚨 <span id="txt-alertHeader">運行情報アラート</span>:<br><span id="alertText"></span>
+        </div>
+
+        <!-- ルート情報表示 -->
+        <div class="route-info">
+            <div><b id="txt-from">出発駅 (From):</b> 立野駅 (Tateno)</div>
+            <div style="margin-top: 4px;"><b id="txt-to">降車駅 (To):</b> <span id="userDest" style="color: #003366; font-weight: bold;">阿蘇駅 (Aso Station)</span></div>
+        </div>
+
+        <div id="txt-choosePlan" style="font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 6px;">👇 希望する列車プランを選択</div>
+
+        <!-- Plan A -->
+        <div id="userPlanA" class="plan-card active" onclick="clickPlan('A')">
+            <span id="txt-badgeA" style="background:#10b981; color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">Plan A：普通列車 (Local)</span>
+            <div id="userTimeA" style="font-size:13px; font-weight:bold; margin-top:6px; color:#1e293b;">09:30 AM 発 ➔ 09:58 AM 着</div>
+            <div id="userPriceA" class="price-num">¥450</div>
+            <div id="txt-warningA" style="color:#dc2626; font-size:11px; font-weight:bold; margin-top:6px; line-height: 1.4;">⚠️ 本数が少なく、逃すと次の普通まで3〜4時間待ち</div>
+        </div>
+
+        <!-- 臨時増便ボックス -->
+        <div id="userExtraTrainBox" style="display:none;">
+            <div id="userPlanExtra" class="plan-card" onclick="clickPlan('Extra')">
+                <span id="txt-badgeExtra" style="background:#3b82f6; color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">✨ 臨時増便：普通列車 (Extra Train)</span>
+                <div id="userTimeExtra" style="font-size:13px; font-weight:bold; margin-top:6px; color:#1e293b;">--:-- 発 ➔ --:-- 着</div>
+                <div id="userPriceExtra" class="price-num">¥450</div>
+            </div>
+        </div>
+
+        <!-- Plan B -->
+        <div id="userPlanB" class="plan-card" onclick="clickPlan('B')">
+            <span id="txt-badgeB" style="background:#ef4444; color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">Plan B：特急・観光トロッコ</span>
+            <div id="userTimeB" style="font-size:13px; font-weight:bold; margin-top:6px; color:#1e293b;">10:56 AM 発 ➔ 11:22 AM 着</div>
+            <div id="userPriceB" class="price-num">¥1,980</div>
+        </div>
+
+        <!-- 地域連携イベント特典 -->
+        <div class="pass-box" style="background-color: #f0f9ff; border-color: #bae6fd;">
+            <div id="txt-eventTitle" style="font-weight:bold; font-size:12px; color:#0369a1;">開催中の地域連携イベント</div>
+            <div class="inner-card">
+                <b id="txt-eventName">【高森駅】高森新春まつり＆田楽フェア</b><br>
+                <span id="txt-eventDesc">鉄道利用パスを提示すると、周辺商店街の対象店舗で特別なプレゼントや割引が受けられます！</span>
+                <button id="txt-eventBtn" class="btn-ui" style="background: #0284c7; color: white;" onclick="sendActionToAdmin('イベント特典', '観光客が地域連携イベントのデジタル特典を獲得しました。')">鉄道乗車特典を受け取る</button>
+            </div>
+        </div>
+
+        <!-- 定額パス -->
+        <div class="pass-box">
+            <div id="txt-passTitle" style="font-weight:bold; font-size:12px; color:#9d174d;">観光客向け定額デジタルパス</div>
+            <div class="inner-card">
+                <b id="txt-passName">南阿蘇・阿蘇周遊フリーパス（1日券）</b><br>価格: ¥2,500
+                <button id="txt-passBtn" class="btn-ui pass" onclick="sendActionToAdmin('パス購入', '観光客が周遊フリーパスを購入しました。')">デジタルパスを購入</button>
+            </div>
+        </div>
+
+        <!-- クーポン -->
+        <div class="coupon-box">
+            <div id="txt-couponTitle" style="font-weight:bold; font-size:12px; color:#14532d;">駅周辺・商店街 提換お買い物クーポン</div>
+            <div class="inner-card">
+                <b id="txt-c1Name">名物：阿蘇高森田楽 保存会 提携割引</b><br>
+                <span id="txt-c1Desc">特典：お食事代金から 10% OFF</span>
+                <button id="txt-c1Btn" class="btn-ui coupon" onclick="sendActionToAdmin('クーポン利用', '観光客が高森田楽割引クーポンを使用しました。')">クーポンを使用する</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const i18n = {
+            ja: {
+                navTitle: "南阿蘇鉄道 多言語ナビシステム", from: "出発駅 (From):", to: "降車駅 (To):", choosePlan: "👇 希望する列車プランを選択",
+                badgeA: "Plan A：普通列車 (Local)", warningA: "⚠️ 本数が少なく、逃すと次の普通まで3〜4時間待ち",
+                badgeB: "Plan B：特急・観光トロッコ", alertHeader: "運行情報アラート", badgeExtra: "✨ 臨時増便：普通列車 (Extra Train)",
+                eventTitle: "開催中の地域連携イベント", eventName: "【高森駅】高森新春まつり＆田楽フェア", eventDesc: "鉄道利用パスを提示すると、周辺商店街の対象店舗で特別なプレゼントや割引が受けられます！", eventBtn: "鉄道乗車特典を受け取る",
+                passTitle: "観光客向け定額デジタルパス", passName: "南阿蘇・阿蘇周遊フリーパス（1日券）", passBtn: "デジタルパスを購入",
+                couponTitle: "駅周辺・商店街 提携お買い物クーポン", c1Name: "名物：阿蘇高森田楽 保存会 提携割引", c1Desc: "特典：お食事代金から 10% OFF", c1Btn: "クーポンを使用する"
+            },
+            en: {
+                navTitle: "Minamiaso Rail Multi-Language Guide", from: "Departure Station (From):", to: "Arrival Station (To):", choosePlan: "👇 Select Your Preferred Train Plan",
+                badgeA: "Plan A: Local Train", warningA: "⚠️ Critical Issue: Miss this, and you must wait 3 to 4 hours for the next local train.",
+                badgeB: "Plan B: Limited Express / Torokko", alertHeader: "Operation Status Alert", badgeExtra: "✨ Special Extra Local Train Active",
+                eventTitle: "Active Regional Festivals & Events", eventName: "[Takamori Station] New Year Festival & Regional Fair", eventDesc: "Show your digital rail pass at participating local shops to claim exclusive free gifts and tourist discounts!", eventBtn: "Claim Rail Passenger Benefit",
+                passTitle: "Fixed-Rate Digital Tourist Passes", passName: "Minamiaso 1-Day Free Roaming Pass", passBtn: "Purchase Digital Rail Pass",
+                couponTitle: "Local Merchant & Shop Coupons", c1Name: "Famous: Takamori Dengaku Association Discount", c1Desc: "Benefit: 10% OFF your meal expenses", c1Btn: "Redeem Shop Coupon"
+            },
+            zh_tw: {
+                navTitle: "南阿蘇鐵道 多語言導航系統", from: "出發車站 (From):", to: "下車車站 (To):", choosePlan: "👇 請選擇您希望的列車方案",
+                badgeA: "方案 A：普通列車 (Local)", warningA: "⚠️ 班次極少！若錯過此班車，需再等候3至4小時才有下一班普通車。",
+                badgeB: "方案 B：特急・觀光小火車", alertHeader: "運行情報提示", badgeExtra: "✨ 臨時加開：普通列車 (Extra Train)",
+                eventTitle: "舉辦中的地域合作活動", eventName: "【高森站】高森新春祭與田樂美食節", eventDesc: "出示鐵道乘車券即可在周邊商店街的指定店鋪獲得精美禮品或專屬折扣！", eventBtn: "領取鐵路乘車特典",
+                passTitle: "觀光客專用定額數位通票", passName: "南阿蘇・阿蘇周遊一日自由通行券", passBtn: "購買數位通行通票",
+                couponTitle: "車站周邊・商店街 合作購物優惠券", c1Name: "名物：阿蘇高森田樂 保存會 聯名優惠", c1Desc: "優惠：餐飲消費可享 10% OFF 折扣", c1Btn: "使用商店優惠券"
+            },
+            zh_cn: {
+                navTitle: "南阿苏铁道 多语言导航系统", from: "出发车站 (From):", to: "下车车站 (To):", choosePlan: "👇 请选择您希望的列车方案",
+                badgeA: "方案 A：普通列车 (Local)", warningA: "⚠️ 班次极少！一旦错过，需再等候3至4小时才有下一班普通车。",
+                badgeB: "方案 B：特急・观光小火车", alertHeader: "运行信息提示", badgeExtra: "✨ 临时加开：普通列车 (Extra Train)",
+                eventTitle: "举办中的地域合作活动", eventName: "【高森站】高森新春祭与田乐美食节", eventDesc: "出示铁道乘车券即可在周边商店街的指定店铺获得精美礼品或专属折扣！", eventBtn: "领取铁路乘车特典",
+                passTitle: "观光客专用定额数字通票", passName: "南阿苏・阿苏周游一日自由通行券", passBtn: "购买数字通行通票",
+                couponTitle: "车站周边・商店街 合作购物优惠券", c1Name: "名物：阿苏高森田乐 保存会 联名优惠", c1Desc: "优惠：餐饮消费可享 10% OFF 折扣", c1Btn: "使用商店优惠券"
+            },
+            ko: {
+                navTitle: "미나미아소 철도 다국어 내비게이션", from: "출발역 (From):", to: "도착역 (To):", choosePlan: "👇 원하는 열차 플랜을 선택하세요",
+                badgeA: "Plan A: 보통 열차 (Local)", warningA: "⚠️ 열차 편수가 매우 적습니다! 놓치면 다음 보통 열차까지 3~4시간을 기다려야 합니다.",
+                badgeB: "Plan B: 특급·관광 트로코 열차", alertHeader: "운행 정보 알림", badgeExtra: "✨ 임시 증편: 보통 열차 (Extra Train)",
+                eventTitle: "진행 중인 지역 연계 이벤트", eventName: "【타카모리역】 타카모리 신년 축제 & 덴가쿠 페어", eventDesc: "철도 패스를 제시하시면 주변 상점가의 대상 점포에서 특별한 선물이나 할인 혜택을 받으실 수 있습니다!", eventBtn: "철도 탑승 혜택 받기",
+                passTitle: "관광객 전용 정액 디지털 패스", passName: "미나미아소·아소 주유 프리패스 (1일권)", passBtn: "디지털 패스 구매",
+                couponTitle: "역 주변·상점가 제휴 쇼핑 쿠폰", c1Name: "명물: 아소 타카모리 덴가쿠 보존회 제휴 할인", c1Desc: "혜택: 식사 대금에서 10% OFF 할인", c1Btn: "쿠폰 사용하기"
+            },
+            vi: {
+                navTitle: "Hệ thống Điều hướng Đa ngôn ngữ Đường sắt Minamiaso", from: "Ga đi (From):", to: "Ga đến (To):", choosePlan: "👇 Chọn kế hoạch chuyến tàu của bạn",
+                badgeA: "Kế hoạch A: Tàu thường (Local)", warningA: "⚠️ Số lượng chuyến rất ít! Nếu bỏ lỡ, bạn sẽ phải chờ từ 3 đến 4 tiếng cho chuyến tàu thường tiếp theo.",
+                badgeB: "Kế hoạch B: Tàu tốc hành / Tàu du lịch Torokko", alertHeader: "Thông báo trạng thái vận hành", badgeExtra: "✨ Chuyến bổ sung đặc biệt: Tàu thường (Extra)",
+                eventTitle: "Sự kiện liên kết khu vực đang diễn ra", eventName: "【Ga Takamori】 Lễ hội đón xuân & Hội chợ Dengaku Takamori", eventDesc: "Xuất trình vé tàu kỹ thuật số tại các cửa hàng liên kết quanh khu phố để nhận quà tặng đặc biệt hoặc giảm giá ưu đãi!", eventBtn: "Nhận quyền lợi hành khách đi tàu",
+                passTitle: "Vé tàu kỹ thuật số định giá cho khách du lịch", passName: "Vé tham quan tự do Minamiaso - Aso (1 ngày)", passBtn: "Mua vé tàu kỹ thuật số",
+                couponTitle: "Phiếu giảm giá mua sắm liên kết quanh nhà ga", c1Name: "Đặc sản: Giảm giá liên kết Hiệp hội bảo tồn Takamori Dengaku", c1Desc: "Ưu đãi: Giảm giá 10% trên tổng hóa đơn ăn uống", c1Btn: "Sử dụng phiếu mua sắm"
+            },
+            ne: {
+                navTitle: "मिनामीआसो रेल बहु-भाषी गाइड प्रणाली", from: "प्रस्थान स्टेशन (From):", to: "आगमन स्टेशन (To):", choosePlan: "👇 आफ्नो प्राथमिकताको रेल योजना छान्नुहोस्",
+                badgeA: "योजना A: लोकल रेल (Local)", warningA: "⚠️ महत्वपूर्ण समस्या: यो छुटाउनुभएमा, अर्को लोकल रेलका लागि ३ देखि ४ घण्टा पर्खनुपर्नेछ।",
+                badgeB: "योजना B: लिमिटेड एक्सप्रेस / टोरोक्को", alertHeader: "सञ्चालन स्थिति सतर्कता", badgeExtra: "✨ विशेष अतिरिक्त लोकल रेल सक्रिय",
+                eventTitle: "सक्रिय क्षेत्रीय उत्सव तथा कार्यक्रमहरू", eventName: "[ताकामोरी स्टेशन] नयाँ वर्ष उत्सव र क्षेत्रीय मेला", eventDesc: "विशेष उपहार र पर्यटक छूटहरू दाबी गर्न सहभागी स्थानीय पसलहरूमा आफ्नो डिजिटल रेल पास देखाउनुहोस्!", eventBtn: "रेल यात्री सुविधा दाबी गर्नुहोस्",
+                passTitle: "पर्यटकहरूका लागि निश्चित दरको डिजिटल पास", passName: "मिनामीआसो १-दिने फ्री रोमिङ पास", passBtn: "डिजिटल रेल पास खरिद गर्नुहोस्",
+                couponTitle: "स्थानीय व्यापारी तथा पसल कुपनहरू", c1Name: "प्रसिद्ध: ताकामोरी देंगाकु संघ छूट", c1Desc: "सुविधा: खाना खर्चमा १०% छूट (10% OFF)", c1Btn: "पसल कुपन प्रयोग गर्नुहोस्"
+            },
+            si: {
+                navTitle: "මිනාමියාසෝ දුම්රිය බහු-භාෂා මාර්ගෝපදේශ පද්ධතිය", from: "පිටත්වන දුම්රිය ස්ථානය (From):", to: "පැමිණෙන දුම්රිය ස්ථානය (To):", choosePlan: "👇 ඔබ කැමති දුම්රිය සැලැස්ම තෝරන්න",
+                badgeA: "సැලැස්ම A: සාමාන්‍ය දුම්රිය (Local)", warningA: "⚠️ තීරණාත්මක ගැටළුවක්: මෙය මඟ හැරුණහොත්, ඊළඟ සාමාන්‍ය දුම්රිය සඳහා ඔබට පැය 3 සිට 4 දක්වා බලා සිටීමට සිදුවේ.",
+                badgeB: "සැලැස්ම B: විශේෂ සීඝ්‍රගාමී / ටොරොක්කෝ", alertHeader: "ධාවන තත්ත්ව අනතුරු ඇඟවීම", badgeExtra: "✨ විශේෂ අතිරේක සාමාන්‍ย දුම්රිය සක්‍රීයයි",
+                eventTitle: "ක්‍රියාකාරී ප්‍රාදේශීය උත්සව සහ සිදුවීම්", eventName: "[තකාමොරි දුම්රිය ස්ථානය] අලුත් අවුරුදු උත්සවය සහ ප්‍රාදේශීය ප්‍රදර්ශනය", eventDesc: "විශේෂ තෑගි සහ සංචාරක වට්ටම් ලබා ගැනීමට සහභාගී වන දේශීය වෙළඳසැල් වලට ඔබගේ ඩිජිටල් දුම්රිය බලපත්‍රය පෙන්වන්න!", eventBtn: "දුම්රිය මගී ප්‍රතිලාභ ලබාගන්න",
+                passTitle: "සංචාරකයින් සඳහා ස්ථාවර ගාස්තු ඩිජिटल දුම්රිය බලපත්‍ර", passName: "මිනාමියාසෝ දින 1ක නිදහස් ගමන් බලපත්‍රය", passBtn: "ඩිජිටල් දුම්රිය බලපත්‍රය මිලදී ගන්න",
+                couponTitle: "දේශීය වෙළඳසැල් සහ සාප්පු වට්ටම් කූපන් පත්", c1Name: "ප්‍රසිද්ධ: තකාමොරි දෙන්ගාකු සංගමයේ වට්ටම්", c1Desc: "ප්‍රතිලාභය: ආහාර වියදම් සඳහා 10% ක වට්ටමක්", c1Btn: "වට්ටම් කූපනය භාවිතා කරන්න"
+            },
+            my: {
+                navTitle: "မီနာမီအာဆို ရထားလိုင်း ဘာသာစုံလမ်းညွှန်စနစ်", from: "ထွက်ခွာမည့်ဘူတာ (From):", to: "ဆိုက်ရောက်မည့်ဘူတာ (To):", choosePlan: "👇 သင်နှစ်သက်ရာ ရထားခရီးစဉ်အစီအစဉ်ကို ရွေးချယ်ပါ",
+                badgeA: "အစီအစဉ် A - ရိုးရိုးရထား (Local)", warningA: "⚠️ သတိပြုရန် - ရထားအစီးရေ အလွန်နည်းပါးပါသည်။ ယခုခရီးစဉ် လွတ်သွားပါက နောက်ရထားအတွက် ၃ နာရီမှ ၄ နာရီအထိ စောင့်ဆိုင်းရပါမည်။",
+                badgeB: "အစီအစဉ် B - အထူးအမြန်ရထား / တိုရိုကို ကမ္ဘာလှည့်ခရီးသွားရထား", alertHeader: "ရထားပြေးဆွဲမှု သတင်းအချက်အလက် သတိပေးချက်", badgeExtra: "✨ အထူးအစီအစဉ်အဖြစ် ထပ်တိုးပြေးဆွဲသော ရိုးရိုးရထား",
+                eventTitle: "လက်ရှိကျင်းပနေသော ဒေသခံပူးပေါင်းဆောင်ရွက်မှု ပွဲတော်များ", eventName: "【တာကာမိုရီဘူတာ】 တာကာမိုရီ နှစ်သစ်ကူးပွဲတော်နှင့် ဒေသစာပွဲတော်", eventDesc: "ရထားလက်မှတ်ပြသရုံဖြင့် အနီးနားရှိ ဆိုင်များတွင် အထူးလက်ဆောင် သို့မဟုတ် လျှော့စျေးများ ရရှိနိုင်ပါသည်။", eventBtn: "ရထားစီးနင်းမှုအထူးခံစားခွင့် ရယူရန်",
+                passTitle: "ကမ္ဘာလှည့်ခရီးသွားများအတွက် သတ်မှတ်နှုန်းထား ဒစ်ဂျစ်တယ်ပတ်စ်လက်မှတ်", passName: "မီနာမီအာဆို - အာဆို တစ်ရက်အကန့်အသတ်မဲ့ သွားလာခွင့်လက်မှတ်", passBtn: "ဒစ်ဂျစ်တယ်ပတ်စ်လက်မှတ် ဝယ်ယူရန်",
+                couponTitle: "ဘူတာအနီးတစ်ဝိုက်ရှိ ဆိုင်ပူးပေါင်းဈေးဝယ်ကူပွန်များ", c1Name: "နာမည်ကြီး - အာဆိုတာကာမိုရီ ဒင်္ဂါကု အစားအစာဆိုင်အဖွဲ့ လျှော့စျေး", c1Desc: "ခံစားခွင့် - စားသောက်စရိတ်မှ ၁၀% လျှော့စျေး (10% OFF)", c1Btn: "ဈေးဝယ်ကူပွန်ကို အသုံးပြုမည်"
+            },
+            th: {
+                navTitle: "ระบบนำทางหลายภาษา รถไฟมินามิอาโซะ", from: "สถานีต้นทาง (From):", to: "สถานีปลายทาง (To):", choosePlan: "👇 กรุณาเลือกแผนการเดินทางของรถไฟ",
+                badgeA: "Plan A: รถไฟธรรมดา (Local)", warningA: "⚠️ รอบวิ่งมีน้อยมาก! หากพลาดเที่ยวนี้ จะต้องรอรถไฟขบวนถัดไปนานถึง 3-4 ชั่วโมง",
+                badgeB: "Plan B: รถไฟด่วนพิเศษ / รถไฟท่องเที่ยวโทร็อกโกะ", alertHeader: "การแจ้งเตือนสถานะการเดินรถไฟ", badgeExtra: "✨ ขบวนเสริมพิเศษ: รถไฟธรรมดา (Extra)",
+                eventTitle: "กิจกรรมความร่วมมือในท้องถิ่นที่กำลังจัดขึ้น", eventName: "【สถานีทาคาโมริ】 เทศกาลปีใหม่ทาคาโมริ & งานแฟร์เดนงากุ", eventDesc: "แสดงตั๋วดิจิทัลพาสแก่ร้านค้าที่ร่วมรายการรอบๆ ย่านร้านค้า เพื่อรับของขวัญพิเศษหรือส่วนลดท่องเที่ยว!", eventBtn: "รับสิทธิประโยชน์ผู้โดยสารรถไฟ",
+                passTitle: "ดิจิทัลพาสท่องเที่ยวแบบเหมาจ่ายสำหรับนักท่องเที่ยว", passName: "มินามิอาโซะ - อาโซะ ทัวร์ฟรีพาส (ตั๋ว 1 วัน)", passBtn: "ซื้อตั๋วดิจิทัลพาส",
+                couponTitle: "คูปองส่วนลดซื้อสินค้าแบรนด์พันธมิตรรอบสถานี", c1Name: "ของดีประจำถิ่น: ส่วนลดสมาคมอนุรักษ์ ทาคาโมริ เดนงากุ", c1Desc: "สิทธิพิเศษ: ส่วนลดอาหารและเครื่องดื่ม 10% OFF", c1Btn: "ใช้คูปองส่วนลดร้านค้า"
+            },
+            fr: {
+                navTitle: "Guide Multi-Langues du Rail de Minamiaso", from: "Gare de Départ (From):", to: "Gare d'Arrivée (To):", choosePlan: "👇 Sélectionnez Votre Plan de Train Préféré",
+                badgeA: "Plan A: Train Local", warningA: "⚠️ Attention: Horaires très limités. Si vous manquez ce train, vous devrez attendre 3 à 4 heures.",
+                badgeB: "Plan B: Train Express / Train Touristique Torokko", alertHeader: "Alerte Info Trafic et Opérations", badgeExtra: "✨ Train Local Supplémentaire Activé",
+                eventTitle: "Événements et Festivals Régionaux Actifs", eventName: "[Gare de Takamori] Festival du Nouvel An & Foire Locale", eventDesc: "Présentez votre pass ferroviaire dans les magasins partenaires pour obtenir des cadeaux exclusifs et des réductions !", eventBtn: "Réclamer l'Avantage Passager",
+                passTitle: "Pass Touristiques Digitaux à Tarif Fixe", passName: "Pass d'un Jour Forfait Libre Minamiaso", passBtn: "Acheter le Pass Digital",
+                couponTitle: "Coupons de Réduction des Commerces Locaux", c1Name: "Spécialité: Remise Association Takamori Dengaku", c1Desc: "Avantage: 10% de réduction sur vos repas", c1Btn: "Utiliser le Coupon Boutique"
+            }
+        };
+
+        function toggleLanguage() {
+            const lang = document.getElementById('langSelect').value;
+            const dict = i18n[lang];
+            for (let key in dict) {
+                const el = document.getElementById('txt-' + key);
+                if(el) el.innerText = dict[key];
+            }
+            if(window.parent && window.parent.frames["adminView"]) {
+                window.parent.frames["adminView"].processIncomingData({ type: 'track', message: `Language updated. App set to [${lang.toUpperCase()}].` });
+            }
+        }
+
+        function sendActionToAdmin(type, msg) {
+            if(window.parent && window.parent.frames["adminView"]) {
+                window.parent.frames["adminView"].processIncomingData({ type: type, message: msg });
+            }
+        }
+
+        function clickPlan(plan) {
+            document.getElementById('userPlanA').classList.remove('active');
+            document.getElementById('userPlanB').classList.remove('active');
+            const extraPlan = document.getElementById('userPlanExtra');
+            if (extraPlan) extraPlan.classList.remove('active');
+
+            document.getElementById('userPlan' + plan).classList.add('active');
+            
+            if(window.parent && window.parent.frames["adminView"]) {
+                window.parent.frames["adminView"].processIncomingData({ type: 'track', message: `観光客が【Plan ${plan}】の列車カードを選択しました。` });
+            }
+        }
+
+        function applyLiveAlert(txt) {
+            document.getElementById('alertText').innerText = txt;
+            document.getElementById('userAlertBanner').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

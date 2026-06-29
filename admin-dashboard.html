@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: transparent; padding: 0; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
+
+    <div class="admin-header">
+        <span>📊 南阿蘇鉄道 リアルタイム統合管理システム</span>
+        <span style="background:rgba(255,255,255,0.2); font-size:12px; padding:4px 10px; border-radius:6px; font-weight: bold;">Team Y 提案モデル</span>
+    </div>
+
+    <div class="admin-body">
+        
+        <div class="admin-section">
+            <h3>1. テスト対象の駅を選択（シミュレーション設定）</h3>
+            <div class="flex-input">
+                <label style="font-weight: bold; color: #475569;">現在の降車駅ターゲット:</label>
+                <select id="adminStationSelect" onchange="adminModifyStation()" style="width: 220px; font-weight: bold; color: #003366;">
+                    <option value="阿蘇駅">阿蘇駅 (Aso Station)</option>
+                    <option value="白川水源駅">白川水源駅 (Shirakawa Suigen)</option>
+                    <option value="高森駅">高森駅 (Takamori Station)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h3>2. 運賃の修正・価格設定（価格平準化シミュレーション）</h3>
+            <div class="flex-input">
+                <span style="width: 170px;">Plan A (普通列車) 運賃:</span>
+                <input type="number" id="inputPriceA" value="450" style="width:80px; text-align: center; font-weight: bold;"> 円
+            </div>
+            <div class="flex-input">
+                <span style="width: 170px;">Plan B (特急・観光) 運賃:</span>
+                <input type="number" id="inputPriceB" value="1980" style="width:80px; text-align: center; font-weight: bold;"> 円
+            </div>
+            <button class="btn-admin" onclick="adminUpdatePrices()" style="margin-top: 6px;">➔ 運賃を修正してユーザー画面に適用</button>
+        </div>
+
+        <div class="admin-section">
+            <h3>3. 運行本数の追加（増便管理システム）</h3>
+            <p style="font-size:11px; color:#64748b; margin:0 0 8px 0;">管理者の操作で臨時列車を時刻表へリアルタイム追加します。</p>
+            <div class="flex-input">
+                <span>出発時刻:</span>
+                <input type="text" id="extraTimeDep" value="10:15 AM" style="width:90px; text-align: center;">
+                <span style="margin: 0 4px;">➔ 到着時刻:</span>
+                <input type="text" id="extraTimeArr" value="10:43 AM" style="width:90px; text-align: center;">
+            </div>
+            <button class="btn-admin" style="background:#16a34a; margin-top: 6px;" onclick="adminAddTrain()">➔ 時刻表にこの臨時便を増便・追加</button>
+        </div>
+
+        <div class="admin-section">
+            <h3>4. SNS リアルタイム一斉配信（遅延・災害時の緊急通知）</h3>
+            <div class="flex-input" style="margin-bottom: 6px;">
+                <textarea id="adminEmergencyText" style="width:100%; height:45px; resize: none;" placeholder="例：大雨の影響により、立野駅〜高森駅間で一時運転を見合わせています。"></textarea>
+            </div>
+            <button class="btn-admin btn-danger" onclick="adminSendEmergency()">緊急情報を公式 SNS とアプリへ一斉送信</button>
+        </div>
+
+        <div class="admin-section fill-remaining" style="background:#f8fafc; border-color: #cbd5e1;">
+            <h3>5. リアルタイムマーケティング統計（自動集計データベース）</h3>
+            <div class="dashboard-grid">
+                <div class="dash-card"><div>パス購入</div><div id="countPass" class="dash-num">0</div></div>
+                <div class="dash-card"><div>クーポン</div><div id="countCoupon" class="dash-num">0</div></div>
+                <div class="dash-card"><div>イベント</div><div id="countEvent" class="dash-num">0</div></div>
+                <div class="dash-card"><div>総アクション</div><div id="countAction" class="dash-num">0</div></div>
+            </div>
+            <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:#475569;">サーバーデータ受信ログ:</div>
+            <div id="adminLogScreen" class="log-screen">
+                [SYSTEM] 運営管理サーバー起動完了。データ連携待機中...<br>
+            </div>
+            <button class="btn-admin" style="background: #64748b; margin-top: 8px; padding: 6px 12px; font-size: 11px;" onclick="clearStatsAndLogs()">🔄 統計データとログを完全にクリア (Reset to 0)</button>
+        </div>
+    </div>
+
+    <script>
+        let passCount = 0;
+        let couponCount = 0;
+        let eventCount = 0;
+        let actionCount = 0;
+
+        function writeLog(tag, msg) {
+            const screen = document.getElementById('adminLogScreen');
+            const time = new Date().toLocaleTimeString();
+            screen.innerHTML = `[${time}] [<span style="color:#38bdf8;font-weight:bold;">${tag}</span>] ${msg}<br>` + screen.innerHTML;
+            actionCount++;
+            document.getElementById('countAction').innerText = actionCount;
+        }
+
+        function processIncomingData(data) {
+            if (data.type === 'パス購入') {
+                passCount++;
+                document.getElementById('countPass').innerText = passCount;
+                writeLog("TICKET_DB", data.message);
+            } else if (data.type === 'クーポン利用') {
+                couponCount++;
+                document.getElementById('countCoupon').innerText = couponCount;
+                writeLog("COUPON_DB", data.message);
+            } else if (data.type === 'イベント特典') {
+                eventCount++;
+                document.getElementById('countEvent').innerText = eventCount;
+                writeLog("EVENT_DB", data.message);
+            } else {
+                writeLog("USER_TRACE", data.message);
+            }
+        }
+
+        // New manual cleanup function to clear database variables and UI elements
+        function clearStatsAndLogs() {
+            passCount = 0;
+            couponCount = 0;
+            eventCount = 0;
+            actionCount = 0;
+            
+            document.getElementById('countPass').innerText = "0";
+            document.getElementById('countCoupon').innerText = "0";
+            document.getElementById('countEvent').innerText = "0";
+            document.getElementById('countAction').innerText = "0";
+            
+            document.getElementById('adminLogScreen').innerHTML = `[SYSTEM] データベース統計及び通信ログを初期化しました。<br>`;
+        }
+
+        function adminModifyStation() {
+            const selectedSt = document.getElementById('adminStationSelect').value;
+            const phoneFrame = window.parent.frames["phoneView"];
+            
+            // Keep automated reset here when changing target stations
+            clearStatsAndLogs();
+
+            if(phoneFrame && phoneFrame.document.getElementById('userDest')) {
+                phoneFrame.document.getElementById('userDest').innerText = selectedSt;
+                if(selectedSt === "阿蘇駅") {
+                    phoneFrame.document.getElementById('userTimeA').innerText = "09:30 AM 発 ➔ 09:58 AM 着";
+                    phoneFrame.document.getElementById('userTimeB').innerText = "10:56 AM 発 ➔ 11:22 AM 着";
+                    document.getElementById('inputPriceA').value = 450;
+                    document.getElementById('inputPriceB').value = 1980;
+                } else if(selectedSt === "白川水源駅") {
+                    phoneFrame.document.getElementById('userTimeA').innerText = "12:04 PM 発 ➔ 12:33 PM 着";
+                    phoneFrame.document.getElementById('userTimeB').innerText = "01:15 PM 発 ➔ 01:42 PM 着";
+                    document.getElementById('inputPriceA').value = 380;
+                    document.getElementById('inputPriceB').value = 1480;
+                } else if(selectedSt === "高森駅") {
+                    phoneFrame.document.getElementById('userTimeA').innerText = "02:10 PM 発 ➔ 02:45 PM 着";
+                    phoneFrame.document.getElementById('userTimeB').innerText = "03:40 PM 発 ➔ 04:12 PM 着";
+                    document.getElementById('inputPriceA').value = 490;
+                    document.getElementById('inputPriceB').value = 1980;
+                }
+                adminUpdatePrices();
+                writeLog("ADMIN_EDIT", `降車ターゲット駅を【${selectedSt}】に変更しました。`);
+            }
+        }
+
+        function adminUpdatePrices() {
+            const priceA = document.getElementById('inputPriceA').value;
+            const priceB = document.getElementById('inputPriceB').value;
+            const phoneFrame = window.parent.frames["phoneView"];
+
+            if(phoneFrame) {
+                if(phoneFrame.document.getElementById('userPriceA')) {
+                    phoneFrame.document.getElementById('userPriceA').innerText = `¥${Number(priceA).toLocaleString()}`;
+                }
+                if(phoneFrame.document.getElementById('userPriceB')) {
+                    phoneFrame.document.getElementById('userPriceB').innerText = `¥${Number(priceB).toLocaleString()}`;
+                }
+                writeLog("ADMIN_EDIT", `運賃設定を上書き修正しました。[Plan A]: ¥${priceA}, [Plan B]: ¥${priceB}`);
+            }
+        }
+
+        function adminAddTrain() {
+            const dep = document.getElementById('extraTimeDep').value;
+            const arr = document.getElementById('extraTimeArr').value;
+            const phoneFrame = window.parent.frames["phoneView"];
+
+            if(phoneFrame) {
+                phoneFrame.document.getElementById('userTimeExtra').innerText = `${dep}発 ➔ ${arr}着`;
+                phoneFrame.document.getElementById('userExtraTrainBox').style.display = 'block';
+                writeLog("ADMIN_EDIT", `利便性向上のため、臨時増便ダイヤ [普通列車（${dep}発）] をシステムへ追加しました。`);
+            }
+        }
+
+        function adminSendEmergency() {
+            const txt = document.getElementById('adminEmergencyText').value;
+            if(txt.trim() === "") { alert("警告メッセージを入力してください。"); return; }
+            
+            const phoneFrame = window.parent.frames["phoneView"];
+            if(phoneFrame && typeof phoneFrame.applyLiveAlert === 'function') {
+                phoneFrame.applyLiveAlert(txt);
+                writeLog("BROADCAST", `公式SNSおよびアプリへの一斉配信完了: 「${txt}」`);
+            }
+        }
+    </script>
+</body>
+</html>
